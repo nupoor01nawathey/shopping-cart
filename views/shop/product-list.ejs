@@ -1,37 +1,40 @@
-<%- include('../partials/head.ejs') %>
-    <link rel="stylesheet" type="text/css" media="screen" href="/css/product.css" />
-    <link rel="stylesheet" type="text/css" media="screen" href="/css/form.css" />
-</head>
-<body>
-    <%- include('../partials/nav.ejs') %>
-    <main>
-        <h1>My Products</h1>
-        <p>List of all the products...</p>
-            <% if ( prods.length > 0 ) { %>
-                <div class="grid">
-                    <% for (let i=0; i < prods.length; i++) { %>
-                        <article class="card product-item">
-                            <header class="card__header">
-                                <h1 class="product__title"><%= prods[i].title %></h1>
-                            </header>
-                            <div class="card__image">
-                                <img src="<%= prods[i].imageUrl %>" alt="A Book">
-                            </div>
-                            <div class="card__content">
-                                <h2 class="product__price">$<%= prods[i].price %></h2>
-                                <p class="product__description"><%= prods[i].description %></p>
-                            </div>
-                            <div class="card__actions">
-                                <a href="/products/<%= prods[i].id %>" class="btn">Details</a>
-                                <%- include('../partials/add-to-cart.ejs', {product: product}) %>
-                            </div>
-                        </article>
-                    <% } %>
-                </div>
-            <% } else { %>
-                <div class="grid">
-                    <h3>No Products found</h3>
-                </div>
-            <% } %> 
-    </main>
-<%- include('../partials/end.ejs') %>
+<%- include('../includes/head.ejs') %>
+    <link rel="stylesheet" href="/css/product.css">
+    </head>
+
+    <body>
+        <%- include('../includes/navigation.ejs') %>
+
+            <main>
+                <% if (prods.length > 0) { %>
+                    <div class="grid">
+                        <% for (let product of prods) { %>
+                            <article class="card product-item">
+                                <header class="card__header">
+                                    <h1 class="product__title">
+                                        <%= product.title %>
+                                    </h1>
+                                </header>
+                                <div class="card__image">
+                                    <img src="<%= product.imageUrl %>" alt="<%= product.title %>">
+                                </div>
+                                <div class="card__content">
+                                    <h2 class="product__price">$
+                                        <%= product.price %>
+                                    </h2>
+                                    <p class="product__description">
+                                        <%= product.description %>
+                                    </p>
+                                </div>
+                                <div class="card__actions">
+                                    <a href="/products/<%= product.id %>" class="btn">Details</a>
+                                    <%- include('../includes/add-to-cart.ejs', {product: product}) %>
+                                </div>
+                            </article>
+                            <% } %>
+                    </div>
+                    <% } else { %>
+                        <h1>No Products Found!</h1>
+                        <% } %>
+            </main>
+            <%- include('../includes/end.ejs') %>
