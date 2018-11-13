@@ -19,7 +19,7 @@ var options = {
 	host: 'localhost',
 	port: 3306,
 	user: 'root',
-	password: 'YOUR_MYSQL_PASSWORD',
+	password: 'Matrix191919#',
 	database: 'ShoppingCart',
 };
 const sessionStore    = new MySQLStore(options);
@@ -42,16 +42,22 @@ app.use(session({
 }));
 
 app.use((req, res, next) => {
-    User.findById(1)
+    if(!req.session.user) {
+        return next();
+    }
+    //console.log('printing req.session ', req.session.user.id);
+    User.findByPk(req.session.user.id)
     .then(user => {
-        req.user = user;
-        // console.log('Magic methods in scope', Object.keys(req.user.__proto__));
+        req.user = user ;
+        //console.log('Magic methods in scope', Object.keys(req.user.__proto__));
         next();
     })
     .catch(err => {
         console.log(err);
     });
 });
+
+
 
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
@@ -73,20 +79,9 @@ sequelize
 // .sync({force: true}) // for modifying existing table not to use in prod
   .sync()
   .then(result => {
-    return User.findByPk(1);
-  }).then(user => {
-    if(!user) {
-        return User.create({ name: 'Nupoor', email: 'test@test.com' });
-    }
-    return user;
-})
-.then(user => {
-    return user.createCart();
-})
-.then(cart => {
     app.listen(3000);
-})
-.catch(err => {
+   })
+   .catch(err => {
     console.log(err);
 });
 
