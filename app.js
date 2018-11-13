@@ -19,7 +19,7 @@ var options = {
 	host: 'localhost',
 	port: 3306,
 	user: 'root',
-	password: 'Matrix191919#',
+	password: 'YOUR_MYSQL_PASSWORD',
 	database: 'ShoppingCart',
 };
 const sessionStore    = new MySQLStore(options);
@@ -56,8 +56,6 @@ app.use((req, res, next) => {
         console.log(err);
     });
 });
-
-
 
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
