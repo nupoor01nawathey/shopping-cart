@@ -3,6 +3,8 @@ const path            = require('path'),
       bodyParser      = require('body-parser'),
       session         = require('express-session'),
       MySQLStore      = require('express-mysql-session')(session),
+      csrf            = require('csurf'),
+      flash           = require('connect-flash'),
       app             = express();
 
 const sequelize       = require('./util/database'),
@@ -31,6 +33,8 @@ const adminRoutes = require('./routes/admin');
 const shopRoutes  = require('./routes/shop');
 const authRoutes  = require('./routes/auth');
 
+const csrfToken = csrf(); 
+
 // process.on('unhandledRejection', up => { throw up }) to match unhandledPromiseRejection Warnings
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -45,7 +49,6 @@ app.use((req, res, next) => {
     if(!req.session.user) {
         return next();
     }
-    //console.log('printing req.session ', req.session.user.id);
     User.findByPk(req.session.user.id)
     .then(user => {
         req.user = user ;
@@ -55,6 +58,15 @@ app.use((req, res, next) => {
     .catch(err => {
         console.log(err);
     });
+});
+
+app.use(csrfToken);
+app.use(flash());
+
+app.use((req, res, next) => {
+    res.locals.isAuthenticated = req.session.isLoggedIn;
+    res.locals.csrfToken = req.csrfToken();
+    next();
 });
 
 app.use('/admin', adminRoutes);
@@ -78,8 +90,6 @@ sequelize
   .sync()
   .then(result => {
     app.listen(3000);
-   })
-   .catch(err => {
+  .catch(err => {
     console.log(err);
 });
-
