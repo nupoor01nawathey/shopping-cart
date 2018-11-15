@@ -225,6 +225,20 @@ form {
   color: white;
 }
 
+.user-message {
+  margin: auto;
+  width: 90%;
+  border: 1px solid brown;
+  background: burlywood;
+  border-radius: 3px;
+  text-align: center;
+}
+
+.user-message__error {
+  background-color: rgb(238, 8, 8);
+  background: radial-gradient(rgb(230, 82, 82))
+}
+
 @media (min-width: 768px) {
   .main-header__nav {
     display: flex;
