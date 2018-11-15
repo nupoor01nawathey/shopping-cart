@@ -1,5 +1,7 @@
 <%- include('../includes/head.ejs') %>
     <link rel="stylesheet" href="/css/cart.css">
+    <link rel="stylesheet" href="/css/forms.css">
+    <link rel="stylesheet" href="/css/auth.css">
     </head>
 
     <body>
@@ -17,10 +19,11 @@
                             </form>
                         </li>
                     <% }) %>
-                </ul>
-                <form action="/create-order" method="POST">
+                <hr>
+                <form class="form-control login-form" action="/create-order" method="POST" >
                     <button type="submit" class="btn" >Order Now!</button>
                 </form>
+            </ul>
             <% } else { %>
                 <h1>No Products in Cart!</h1>
             <% } %>
