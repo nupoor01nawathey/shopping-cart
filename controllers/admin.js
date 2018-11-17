@@ -34,7 +34,8 @@ exports.postAddProduct = (req, res, next) => {
 };
 
 exports.getProducts = (req, res, next) => {
-  Product.findAll({where: {userId: req.user.id}})  
+  //Product.findAll({where: {userId: req.user.id}})  
+  Product.findAll()
   .then(products => {
     res.render('admin/products', {
       prods: products,
@@ -79,14 +80,19 @@ exports.postEditProduct = (req, res, next) => {
 
   Product.findByPk(prodId)
   .then(product => {
+    if(product.userId !== req.user.id) { //check if product created by user stored in db
+      res.redirect('/');
+    }
     product.title = updatedTitle;
     product.imageUrl = updatedimageUrl;
     product.price = updatedprice;
     product.description = updateddescription;
-    return product.save();
-  })
-  .then(result => {
-    res.redirect('/admin/products');
+    return 
+      product
+      .save()
+      .then(result => {
+        res.redirect('/admin/products');
+      })
   })
   .catch(err => {
     console.log(err);
@@ -95,15 +101,16 @@ exports.postEditProduct = (req, res, next) => {
 
 exports.postDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
-  Product.findByPk(prodId)
+  Product.findOne({ where: {id: prodId, userId: req.user.id}})
   .then(product => {
-      return product.destroy();
+    if(!product) {
+      return res.redirect('/');
+    }
+    return product.destroy();
   })
   .then((result) => {
     console.log('Product destroyed')
     res.redirect('/admin/products');
   })
-  .catch(err => {
-    console.log(err);
-  })
+  .catch(err => { console.log(err) });
 }
