@@ -6,7 +6,8 @@ exports.getAddProduct = (req, res, next) => {
     path: '/admin/add-product',
     formsCSS: true,
     productCSS: true,
-    activeAddProduct: true
+    activeAddProduct: true,
+    //isAuthenticated: req.session.isLoggedIn
   });
 };
 
@@ -21,6 +22,7 @@ exports.postAddProduct = (req, res, next) => {
     imageUrl: imageUrl, 
     description: description, 
     price: price,
+    userId: req.user
   })
   .then(result => {
     console.log(result);
@@ -32,23 +34,19 @@ exports.postAddProduct = (req, res, next) => {
 };
 
 exports.getProducts = (req, res, next) => {
-  //Product.findAll()
-  req.user.getProducts()
+  Product.findAll({where: {userId: req.user.id}})  
   .then(products => {
     res.render('admin/products', {
       prods: products,
       pageTitle: 'Admin Products',
       path: '/admin/products'
-    });
+    })
   })
-  .catch(err => {
-    console.log(err);
-  });
+  .catch(err => { console.log(err)});
 };
 
 exports.getEditProduct = (req, res, next) => {
   const editMode = req.query.edit;
-  //console.log(req.query)
   if(!editMode) {
     return res.redirect('/');
   }
@@ -79,7 +77,7 @@ exports.postEditProduct = (req, res, next) => {
   updatedprice       = req.body.price,
   updateddescription = req.body.description;
 
-  Product.findById(prodId)
+  Product.findByPk(prodId)
   .then(product => {
     product.title = updatedTitle;
     product.imageUrl = updatedimageUrl;
