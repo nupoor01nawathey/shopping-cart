@@ -1,3 +1,5 @@
+'use strict';
+
 const path            = require('path'),
       express         = require('express'),
       bodyParser      = require('body-parser'),
@@ -21,7 +23,7 @@ var options = {
 	host: 'localhost',
 	port: 3306,
 	user: 'root',
-	password: 'YOUR_MYSQL_PASSWORD',
+	password: 'YOUR_SQL_KEY',
 	database: 'ShoppingCart',
 };
 const sessionStore    = new MySQLStore(options);
@@ -51,12 +53,14 @@ app.use((req, res, next) => {
     }
     User.findByPk(req.session.user.id)
     .then(user => {
+        if(!user) {
+            return next(); // continue without user if not found
+        }
         req.user = user ;
-        //console.log('Magic methods in scope', Object.keys(req.user.__proto__));
         next();
     })
     .catch(err => {
-        console.log(err);
+        next(new Error(err));
     });
 });
 
@@ -73,7 +77,16 @@ app.use('/admin', adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
 
+app.use('/500', errorController.get500);
 app.use(errorController.get404);
+app.use((error, req, res, next) => {
+    //res.redirect('/500');
+    res.status(500).render('500', { 
+        pageTitle: 'Error', 
+        path: '/500',
+        isAuthenticated: req.session.isLoggedIn 
+    });
+});
 
 Product.belongsTo(User, {constraints: true, onDelete: 'CASCADE'})
 User.hasMany(Product);
@@ -86,10 +99,12 @@ User.hasMany(Order);
 Order.belongsToMany(Product, { through: OrderItem });
 
 sequelize
-// .sync({force: true}) // for modifying existing table not to use in prod
+  //.sync({force: true}) // for modifying existing table not to use in prod
   .sync()
   .then(result => {
     app.listen(3000);
-  .catch(err => {
+   // return User.findByPk(1);
+  })
+.catch(err => {
     console.log(err);
 });
