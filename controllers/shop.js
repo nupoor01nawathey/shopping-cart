@@ -1,20 +1,45 @@
+const fs      = require('fs'),
+      path    = require('path'),
+      pdfkit  = require('pdfkit');
+
 const Product = require('../models/product'),
-      Cart    = require('../models/cart');
+       Cart   = require('../models/cart'),
+       Order  = require('../models/order');
+
+const ITEMS_PER_PAGE = 1;
+let   OFFSET = 0;
 
 exports.getProducts = (req, res, next) => {
-  Product.findAll()
+  const page = +req.query.page || 1;
+  Product.count()
+  .then(numProducts => {
+    totalItems = numProducts;
+    return Product.findAll({ 
+      offset: (page-1) * ITEMS_PER_PAGE, 
+      limit: ITEMS_PER_PAGE
+    }) 
     .then(products => {
       res.render('shop/product-list', {
-      prods: products,
-      pageTitle: 'All Products',
-      path: '/products',
-      isAuthenticated: req.session.isLoggedIn
-    });
+          prods: products,
+          pageTitle: 'All Products',
+          path: '/products',
+          currentPage: page,
+          hasNextPage: ITEMS_PER_PAGE * page < totalItems,
+          hasPreviousPage: page > 1,
+          nextPage: page + 1,
+          previousPage: page - 1,
+          lastPage: Math.ceil(totalItems/ITEMS_PER_PAGE)
+        });
+      })
+      .catch(err => {
+        console.log(err);
+      });
   })
   .catch(err => { 
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(error);
+    // const error = new Error(err);
+    // error.httpStatusCode = 500;
+    // return next(error);
+    console.log(err);
    });
 };
 
@@ -38,18 +63,38 @@ exports.getProduct = (req, res, next) => {
 };
 
 exports.getIndex = (req, res, next) => {
-  Product.findAll()
-  .then(products => {
-    res.render('shop/index', {
-      prods: products,
-      pageTitle: 'Shop',
-      path: '/',
-      isAuthenticated: req.session.isLoggedIn
-    });
+  const page = +req.query.page || 1;
+  let totalItems;
+
+  Product.count()
+  .then(numProducts => {
+    totalItems = numProducts;
+    return Product.findAll({ 
+      offset: (page-1) * ITEMS_PER_PAGE, 
+      limit: ITEMS_PER_PAGE
+    }) 
+    .then(products => {
+      res.render('shop/index', {
+          prods: products,
+          pageTitle: 'Shop',
+          path: '/',
+          currentPage: page,
+          hasNextPage: ITEMS_PER_PAGE * page < totalItems,
+          hasPreviousPage: page > 1,
+          nextPage: page + 1,
+          previousPage: page - 1,
+          lastPage: Math.ceil(totalItems/ITEMS_PER_PAGE)
+        });
+      })
+      .catch(err => {
+        console.log(err);
+      });
   })
-  .catch(err => {
-    console.log(err);
-  });
+  .catch(err => { 
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
+   });
 };
 
 exports.getCart = (req, res, next) => {
@@ -188,3 +233,52 @@ exports.getCheckout = (req, res, next) => {
     isAuthenticated: req.session.isLoggedIn
   });
 };
+
+
+exports.getInvoice = (req, res, next) => {
+  const orderId = req.params.orderId;
+
+  const invoiceName = 'invoice-' + orderId + '.pdf' ,
+        invoicePath = path.join('data', 'invoices', invoiceName);
+
+  Order.findByPk(orderId)
+  .then(order => {
+    if(!order) {
+      console.log('No order found with the given orderId');
+      return next(new Error('No order found with the given orderId'));
+    }
+    if(order.userId !== req.user.id) {
+      console.log('Unauthorized');
+      return next(new Error('Unauthorized!'));
+    }
+    const pdfDoc = new pdfkit();
+    res.setHeader('Content-type', 'application/pdf');
+    res.setHeader('Content-disposition', 'inline;filename="' + invoiceName + '"');
+    pdfDoc.pipe(fs.createWriteStream(invoicePath));
+    pdfDoc.pipe(res);
+    pdfDoc.fontSize(26).text('Invoice', {underline: true});
+    pdfDoc.text('-------------------------------------');
+
+    let totalPrice = 0;
+    return order.getProducts()
+    .then(prods => {
+      prods.forEach(p => {
+        totalPrice += p.quantity * p.price;
+        pdfDoc
+        .fontSize(16)
+        .text(p.title + ' - ' +
+        p.quantity + // TODO Quantity not getting populated
+        ' x ' +
+        '$' +
+        p.price
+        );
+        pdfDoc.text('-------------------------------------');
+      });
+    })
+    .then(() => {
+      pdfDoc.end();
+    })
+    .catch(err => console.log(err));
+  })
+  .catch(err => next(err));
+}
