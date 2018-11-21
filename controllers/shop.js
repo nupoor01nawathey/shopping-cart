@@ -36,9 +36,9 @@ exports.getProducts = (req, res, next) => {
       });
   })
   .catch(err => { 
-    // const error = new Error(err);
-    // error.httpStatusCode = 500;
-    // return next(error);
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
     console.log(err);
    });
 };
@@ -195,6 +195,15 @@ exports.getOrders = (req, res, next) => {
 };
 
 exports.postOrder = (req, res, next) => {
+
+  // Set your secret key: remember to change this to your live secret key in production
+  // See your keys here: https://dashboard.stripe.com/account/apikeys
+  var stripe = require("stripe")("YOUR_API_KEY");
+
+  // Token is created using Checkout or Elements!
+  // Get the payment token ID submitted by the form:
+  const token = req.body.stripeToken; // Using Express
+  let total = 0;
   let fetchedCart;
   req.user
     .getCart()
@@ -203,15 +212,28 @@ exports.postOrder = (req, res, next) => {
       return cart.getProducts();
     })
     .then(products => {
+      products.forEach(p => {
+        total += p.cartItem.quantity * p.price;
+      });
       return req.user
         .createOrder()
         .then(order => {
           return order.addProducts(products.map(product => {
             product.orderItem = { quantity: product.cartItem.quantity }
+            //product.userId = req.user.userId;
             return product;
           }));
         })
         .then((result) => {
+          const charge = stripe.charges.create({
+            amount: total * 100,
+            currency: 'usd',
+            description: 'Charge for ordered products',
+            source: token,
+            metadata: {
+              order_id: result.id // store order_id in stripe acc
+            }
+          });
           return fetchedCart.setProducts(null);
         })
         .then(() => {
@@ -227,11 +249,26 @@ exports.postOrder = (req, res, next) => {
 }
 
 exports.getCheckout = (req, res, next) => {
-  res.render('shop/checkout', {
-    path: '/checkout',
-    pageTitle: 'Checkout',
-    isAuthenticated: req.session.isLoggedIn
-  });
+  req.user
+    .getCart()
+    .then(cart => {
+      return cart
+        .getProducts()
+        .then(products => {
+          let total = 0;
+          products.forEach(p => {
+            total += p.cartItem.quantity * p.price;
+          });
+          res.render('shop/checkout', {
+            path: '/checkout',
+            pageTitle: 'Checkout',
+            products: products,
+            total: total
+          });
+        })
+        .catch(err => console.log(err));
+    })
+    .catch(err => console.log(err));
 };
 
 
