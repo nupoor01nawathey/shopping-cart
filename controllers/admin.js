@@ -1,10 +1,13 @@
 const { validationResult } = require('express-validator/check');
 const Product = require('../models/product');
 
+const ITEMS_PER_PAGE = 1;
+let   OFFSET = 0;
+
 exports.getAddProduct = (req, res, next) => {
-  res.render('admin/edit-product', {
-    pageTitle: 'Edit Product',
-    path: '/admin/edit-product',
+  res.render('admin/add-product', {
+    pageTitle: 'Add Product',
+    path: '/admin/add-product',
     formsCSS: true,
     productCSS: true,
     activeAddProduct: true,
@@ -16,10 +19,27 @@ exports.getAddProduct = (req, res, next) => {
 
 exports.postAddProduct = (req, res, next) => {
   const title       = req.body.title,
-        imageUrl    = req.body.image,
+        image       = req.file,
         price       = req.body.price,
         description = req.body.description;
-  
+
+  const imageUrl    = image.path;
+
+  if(!image) {
+    return res.status(422).render('admin/products', {
+      pageTitle: 'Add Products',
+      path: '/admin/products',
+      prods: {
+        title: title,
+        price: price,
+        description: description
+      },
+      editing: false,
+      hasErrors: true,
+      errorMessage: 'Please upload images with format png/jpg/jpeg!'
+    })
+  }
+
   const errors = validationResult(req);
   if(!errors.isEmpty()) {
     return res.status(422).render('admin/products', {
@@ -37,6 +57,7 @@ exports.postAddProduct = (req, res, next) => {
       errorMessage: errors.array()[0].msg
     })
   }
+
   req.user.createProduct({
     title: title, 
     imageUrl: imageUrl, 
@@ -56,24 +77,39 @@ exports.postAddProduct = (req, res, next) => {
 };
 
 exports.getProducts = (req, res, next) => {
-  //Product.findAll({where: {userId: req.user.id}})  
-  Product.findAll()
-  .then(products => {
-    res.render('admin/products', {
-      prods: products,
-      pageTitle: 'Admin Products',
-      path: '/admin/products',
-      errorMessage: null,
-      editing: false,
-      hasErrors: false,
-    });
+  const page = +req.query.page || 1;
+  Product.count()
+  .then(numProducts => {
+    totalItems = numProducts;
+    return Product.findAll({ 
+      offset: (page-1) * ITEMS_PER_PAGE, 
+      limit: ITEMS_PER_PAGE
+    }) 
+    .then(products => {
+      res.render('admin/products', {
+          prods: products,
+          pageTitle: 'Admin Products',
+          path: '/admin/products',
+          currentPage: page,
+          hasNextPage: ITEMS_PER_PAGE * page < totalItems,
+          hasPreviousPage: page > 1,
+          nextPage: page + 1,
+          previousPage: page - 1,
+          lastPage: Math.ceil(totalItems/ITEMS_PER_PAGE)
+        });
+      })
+      .catch(err => {
+        console.log(err);
+      });
   })
   .catch(err => { 
+    console.log(err);
     const error = new Error(err);
     error.httpStatusCode = 500;
     return next(error);
   });
 };
+
 
 exports.getEditProduct = (req, res, next) => { // TODO FIX EDIT-PRODUCT ROUTE
   const editMode = req.query.edit;
@@ -82,7 +118,6 @@ exports.getEditProduct = (req, res, next) => { // TODO FIX EDIT-PRODUCT ROUTE
   }
   const prodId = req.params.productId;
 
-  //Product.findById(prodId)
   req.user.getProducts({ where: {id: prodId} })
   .then(products => {
     const product = products[0];
@@ -109,10 +144,27 @@ exports.getEditProduct = (req, res, next) => { // TODO FIX EDIT-PRODUCT ROUTE
 exports.postEditProduct = (req, res, next) => {
   const prodId       = req.body.productId,
   updatedTitle       = req.body.title,
-  updatedimageUrl    = req.body.imageUrl,
+  image              = req.file,
   updatedprice       = req.body.price,
   updateddescription = req.body.description;
   
+  const updatedimageUrl = image.path;
+
+  if(!image) {
+    return res.status(422).render('admin/edit-products', {
+      pageTitle: 'Edit Products',
+      path: '/admin/products',
+      prods: {
+        title: title,
+        price: price,
+        description: description
+      },
+      editing: false,
+      hasErrors: true,
+      errorMessage: 'Please upload images with format png/jpg/jpeg!'
+    })
+  }
+
   const errors = validationResult(req);
   if(!errors.isEmpty()) {
     return res.status(422).render('admin/edit-product', {
@@ -153,22 +205,28 @@ exports.postEditProduct = (req, res, next) => {
   })
 }
 
-exports.postDeleteProduct = (req, res, next) => {
-  const prodId = req.body.productId;
+exports.deleteProduct = (req, res, next) => {
+  const prodId = req.params.productId;
   Product.findOne({ where: {id: prodId, userId: req.user.id}})
   .then(product => {
     if(!product) {
       return res.redirect('/');
     }
-    return product.destroy();
+    return product.destroy(); // TODO DELETE IMAGE FILES FROM DISK
   })
   .then((result) => {
     console.log('Product destroyed')
-    res.redirect('/admin/products');
+    //res.redirect('/admin/products');
+    res.status(200).json({
+      message: 'Success'
+    });
   })
   .catch(err => { 
     const error = new Error(err);
     error.httpStatusCode = 500;
-    return next(error);
+    //return next(error);
+    res.status(500).json({
+      message: 'deleting product failed!'
+    });
    });
 }
