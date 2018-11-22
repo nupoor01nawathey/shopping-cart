@@ -9,7 +9,7 @@ const User         = require('../models/user');
 
 const transporter  = nodemailer.createTransport(sendgridTransport({
     auth : {
-        api_key : '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'
+        api_key : 'YOUR_SENDGRID_API_KEY'
     }
 }));
 
