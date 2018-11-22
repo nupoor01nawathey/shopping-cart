@@ -1,5 +1,6 @@
-const express = require('express');
-const path = require('path');
+const express   = require('express'),
+      { check } = require('express-validator/check');
+
 
 const adminController = require('../controllers/admin');
 
@@ -14,12 +15,32 @@ router.get('/add-product', isAuth, adminController.getAddProduct);
 router.get('/products', adminController.getProducts);
 
 // /admin/add-product => POST
-router.post('/add-product', isAuth, adminController.postAddProduct);
+router.post('/add-product', isAuth, 
+    check('title')
+        .isString()
+        .isLength({min: 3})
+        .trim(),
+    check('price').isFloat(),
+    check('description')
+        .isString()
+        .isLength(8)
+        .trim()
+    , adminController.postAddProduct);
 
 router.get('/edit-product/:productId', isAuth, adminController.getEditProduct);
 
-router.post('/edit-product', isAuth, adminController.postEditProduct);
+router.post('/edit-product', isAuth,
+    check('title')
+    .isString()
+    .isLength({min: 3})
+    .trim(),
+    check('price').isFloat(),
+    check('description')
+    .isString()
+    .isLength(8)
+    .trim()
+, adminController.postEditProduct);
 
-router.post('/delete-product', isAuth, adminController.postDeleteProduct);
+router.delete('/product/:productId', isAuth, adminController.deleteProduct);
 
 module.exports = router;
