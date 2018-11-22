@@ -1,5 +1,3 @@
-'use strict';
-
 const path            = require('path'),
       express         = require('express'),
       bodyParser      = require('body-parser'),
@@ -7,6 +5,7 @@ const path            = require('path'),
       MySQLStore      = require('express-mysql-session')(session),
       csrf            = require('csurf'),
       flash           = require('connect-flash'),
+      multer          = require('multer'),
       app             = express();
 
 const sequelize       = require('./util/database'),
@@ -17,13 +16,16 @@ const sequelize       = require('./util/database'),
       Order           = require('./models/order'),
       OrderItem       = require('./models/order-item');
 
-const errorController = require('./controllers/error');
+const errorController = require('./controllers/error'),
+      shopController  = require('./controllers/shop');
+
+const isAuth = require('./middleware/isAuth');
 
 var options = {
 	host: 'localhost',
 	port: 3306,
 	user: 'root',
-	password: 'YOUR_SQL_KEY',
+	password: 'YOUR_MYSQL_PASSWORD',
 	database: 'ShoppingCart',
 };
 const sessionStore    = new MySQLStore(options);
@@ -37,9 +39,36 @@ const authRoutes  = require('./routes/auth');
 
 const csrfToken = csrf(); 
 
+const fileStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'images');
+    },
+    filename: (req, file, cb) => {
+        cb(null, file.originalname + '-' + new Date().toISOString()) ;
+    }
+});
+const fileFilter = (req, file, cb) => {
+    if( file.mimetype === 'image/png'  || 
+        file.mimetype === 'image/jpeg' || 
+        file.mimetype === 'image/jpg' ) {
+        cb(null, true);
+    } else {
+        cb(null, false);
+    }
+}
+
 // process.on('unhandledRejection', up => { throw up }) to match unhandledPromiseRejection Warnings
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use( 
+    multer({ 
+        storage: fileStorage,
+        fileFilter: fileFilter
+    })
+    .single('image')
+);
+
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use(session({ 
     secret: 'CatSAreTHECUte$T', 
     resave: false, 
@@ -57,6 +86,7 @@ app.use((req, res, next) => {
             return next(); // continue without user if not found
         }
         req.user = user ;
+        //console.log('Magic methods in scope', Object.keys(req.user.__proto__));
         next();
     })
     .catch(err => {
@@ -64,9 +94,12 @@ app.use((req, res, next) => {
     });
 });
 
-app.use(csrfToken);
+
 app.use(flash());
 
+app.post('/create-order', isAuth, shopController.postOrder);
+
+app.use(csrfToken);
 app.use((req, res, next) => {
     res.locals.isAuthenticated = req.session.isLoggedIn;
     res.locals.csrfToken = req.csrfToken();
@@ -81,6 +114,7 @@ app.use('/500', errorController.get500);
 app.use(errorController.get404);
 app.use((error, req, res, next) => {
     //res.redirect('/500');
+    console.log(error);
     res.status(500).render('500', { 
         pageTitle: 'Error', 
         path: '/500',
@@ -103,8 +137,6 @@ sequelize
   .sync()
   .then(result => {
     app.listen(3000);
-   // return User.findByPk(1);
-  })
 .catch(err => {
     console.log(err);
 });
