@@ -25,22 +25,24 @@
                     </a>
                 </li>
             <% } %>
+        </ul>
+        <ul class="main-header__item-list">
             <% if(!isAuthenticated) { %>
                 <li class="main-header__item">            
                     <a class="<%= path === '/login' ? 'active' : '' %>" href="/login">Login</a>
                 </li>
+                <li class="main-header__item">
+                    <a href="/signup">Signup</a>
+                </li>
             <% } else {%>
-                <form action="/logout" method="POST">
-                    <li class="main-header__item">
-                        <button type="submit">Logout</button>
+                <li class="main-header__item">
+                    <form action="/logout" method="POST">
                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    </li>        
-                </form>
+                        <button type="submit">Logout</button>
+                    </form>                        
+                </li>        
             <% } %>
-            <li class="main-header__item">
-                <a href="/signup">Signup</a>
-            </li>
-        </ul>
+        </ul> 
     </nav>
 </header>
 
