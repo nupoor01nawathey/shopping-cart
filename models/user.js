@@ -10,8 +10,9 @@ const User = sequelize.define('user', {
         primaryKey: true
     },
     email: Sequelize.STRING,
-    password: Sequelize.STRING
-
+    password: Sequelize.STRING,
+    resetToken: Sequelize.STRING,
+    resetTokenExpiration: Sequelize.DATE
 });
 
 module.exports = User;
