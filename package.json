@@ -11,7 +11,10 @@
   "author": "Nupoor Nawathey",
   "license": "ISC",
   "devDependencies": {
-    "nodemon": "^1.18.3"
+    "chai": "^4.2.0",
+    "expect": "^23.6.0",
+    "nodemon": "^1.18.3",
+    "supertest": "^3.3.0"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
