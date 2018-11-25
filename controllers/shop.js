@@ -36,9 +36,9 @@ exports.getProducts = (req, res, next) => {
       });
   })
   .catch(err => { 
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(error);
+    // const error = new Error(err);
+    // error.httpStatusCode = 500;
+    // return next(error);
     console.log(err);
    });
 };
@@ -51,8 +51,7 @@ exports.getProduct = (req, res, next) => {
     res.render('shop/product-detail', {
         product: product,
         pageTitle: product.title,
-        path: '/products',
-        isAuthenticated: req.session.isLoggedIn
+        path: '/products'
       });
   })
   .catch(err => { 
@@ -107,8 +106,7 @@ exports.getCart = (req, res, next) => {
           res.render('shop/cart', {
             path: '/cart',
             pageTitle: 'Your Cart',
-            products: products,
-            isAuthenticated: req.session.isLoggedIn
+            products: products
           });
         })
         .catch(err => console.log(err));
@@ -165,7 +163,7 @@ exports.postCartDeleteProduct = (req, res, next) => {
       if(products.length > 0) {
         const product = products[0];
         console.log(product);
-        return product.cartItem.destroy();
+        return product.cartItem.destroy(); // FIX remove image from disk also
       }
     })
     .then(() => {
@@ -198,7 +196,7 @@ exports.postOrder = (req, res, next) => {
 
   // Set your secret key: remember to change this to your live secret key in production
   // See your keys here: https://dashboard.stripe.com/account/apikeys
-  var stripe = require("stripe")("YOUR_API_KEY");
+  var stripe = require("stripe")(process.env.STRIPE_KEY);
 
   // Token is created using Checkout or Elements!
   // Get the payment token ID submitted by the form:
