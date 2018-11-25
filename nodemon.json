@@ -1,0 +1,12 @@
+{
+    "env": {
+        "MYSQL_USER": <username>,
+        "MYSQL_PASSWORD": <password>,
+        "MYSQL_DB": <db>,
+        "MYSQL_HOST": "localhost",
+        "SESSION_SECRET": <secret>,
+        "STRIPE_KEY": <stripe_key>,
+        "SENDGRID_KEY": <sendgrid_key>
+    }
+}
+
