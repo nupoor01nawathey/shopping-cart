@@ -3,10 +3,14 @@
   "version": "1.0.0",
   "description": "shopping-cart",
   "main": "app.js",
+  "engines": {
+    "node": "10.3.0"
+  },
   "scripts": {
     "test": "mocha tests/*test.js",
-    "start": "nodemon app.js",
-    "start-server": "node app.js"
+    "start": "NODE_ENV=production MYSQL_USER=<username> MYSQL_PASSWORD=<password> MYSQL_DB=<db> MYSQL_HOST=localhost SESSION_SECRET=<secret> STRIPE_KEY=<stripe_key> SENDGRID_KEY=<sendgrid_key> node app.js",
+    "start-server": "node app.js",
+    "start:dev": "nodemon app.js"
   },
   "author": "Nupoor Nawathey",
   "license": "ISC",
@@ -19,6 +23,7 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.18.3",
+    "compression": "^1.7.3",
     "connect-flash": "^0.1.1",
     "csurf": "^1.9.0",
     "ejs": "^2.6.1",
@@ -26,6 +31,8 @@
     "express-mysql-session": "^2.0.1",
     "express-session": "^1.15.6",
     "express-validator": "^5.3.0",
+    "helmet": "^3.15.0",
+    "morgan": "^1.9.1",
     "multer": "^1.4.1",
     "mysql2": "^1.6.4",
     "nodemailer": "^4.6.8",
