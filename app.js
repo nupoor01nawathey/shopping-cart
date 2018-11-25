@@ -1,4 +1,8 @@
-const path            = require('path'),
+'use strict';
+
+const fs              = require('fs'),
+      https           = require('https'),
+      path            = require('path'),
       express         = require('express'),
       bodyParser      = require('body-parser'),
       session         = require('express-session'),
@@ -6,6 +10,9 @@ const path            = require('path'),
       csrf            = require('csurf'),
       flash           = require('connect-flash'),
       multer          = require('multer'),
+      helmet          = require('helmet'),
+      compression     = require('compression'),
+      morgan          = require('morgan'),
       app             = express();
 
 const sequelize       = require('./util/database'),
@@ -24,11 +31,13 @@ const isAuth = require('./middleware/isAuth');
 var options = {
 	host: 'localhost',
 	port: 3306,
-	user: 'root',
-	password: 'YOUR_MYSQL_PASSWORD',
-	database: 'ShoppingCart',
+	user: process.env.MYSQL_USER,
+	password: process.env.MYSQL_PASSWORD,
+	database: process.env.MYSQL_DB,
 };
 const sessionStore    = new MySQLStore(options);
+
+// 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
 
 app.set('view engine', 'ejs');
 app.set('views', 'views');
@@ -38,6 +47,9 @@ const shopRoutes  = require('./routes/shop');
 const authRoutes  = require('./routes/auth');
 
 const csrfToken = csrf(); 
+
+const privateKey = fs.readFileSync('server.key'),
+      publicCert = fs.readFileSync('server.cert');
 
 const fileStorage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -66,11 +78,12 @@ app.use(
     })
     .single('image')
 );
-
+app.use(helmet());
+app.use(compression());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use(session({ 
-    secret: 'CatSAreTHECUte$T', 
+    secret: process.env.SESSION_SECRET, 
     resave: false, 
     saveUninitialized: false,
     store: sessionStore
@@ -122,6 +135,9 @@ app.use((error, req, res, next) => {
     });
 });
 
+let accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
+app.use(morgan('combined', { stream: accessLogStream }));
+
 Product.belongsTo(User, {constraints: true, onDelete: 'CASCADE'})
 User.hasMany(Product);
 User.hasOne(Cart);
@@ -132,11 +148,18 @@ Order.belongsTo(User);
 User.hasMany(Order);
 Order.belongsToMany(Product, { through: OrderItem });
 
+const PORT = process.env.PORT || 3000 ;
 sequelize
   //.sync({force: true}) // for modifying existing table not to use in prod
   .sync()
   .then(result => {
-    app.listen(3000);
+    // https.createServer({key: privateKey, cert: publicCert}, app).listen(PORT);
+    app.listen(PORT, () => {
+        console.log('server started at port ', PORT);
+    });
+  })
 .catch(err => {
     console.log(err);
 });
+
+// openssl req -nodes -new -x509 -keyout server.key -out server.cert
