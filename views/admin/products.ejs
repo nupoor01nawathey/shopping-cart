@@ -29,7 +29,9 @@
                                 <% if(isAuthenticated) { %>
                                     <div class="card__actions">
                                         <a href="/products/<%= product.id %>" class="btn">Details</a>
-                                        <%- include('../includes/add-to-cart.ejs', {product: product}) %>
+                                        <% if(path === '/shop') { %>
+                                            <%- include('../includes/add-to-cart.ejs', {product: product}) %>
+                                        <% } %>
                                     </div>
                                 <% } %>
                                 <% if (path === '/admin/products') { %>
