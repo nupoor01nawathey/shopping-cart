@@ -6,48 +6,6 @@ const Product = require('../models/product'),
        Cart   = require('../models/cart'),
        Order  = require('../models/order');
 
-const ITEMS_PER_PAGE = 1;
-let   OFFSET = 0;
-
-exports.getProducts = (req, res, next) => {
-  let path;
-  if(req.route.path === '/') {
-    path = '/shop';
-  } else if(req.route.path === '/products') {
-    path = '/products';
-  }
-  const page = +req.query.page || 1;
-  Product.count()
-  .then(numProducts => {
-    totalItems = numProducts;
-    return Product.findAll({ 
-      offset: (page-1) * ITEMS_PER_PAGE, 
-      limit: ITEMS_PER_PAGE
-    }) 
-    .then(products => {
-      res.render('admin/products', {
-          prods: products,
-          pageTitle: 'All Products',
-          path: path,
-          currentPage: page,
-          hasNextPage: ITEMS_PER_PAGE * page < totalItems,
-          hasPreviousPage: page > 1,
-          nextPage: page + 1,
-          previousPage: page - 1,
-          lastPage: Math.ceil(totalItems/ITEMS_PER_PAGE)
-        });
-      })
-      .catch(err => {
-        console.log(err);
-      });
-  })
-  .catch(err => { 
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(error);
-   });
-};
-
 exports.getProduct = (req, res, next) => {
   const prodId = req.params.productId;
   Product.findByPk(prodId)
