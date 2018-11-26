@@ -10,6 +10,12 @@ const ITEMS_PER_PAGE = 1;
 let   OFFSET = 0;
 
 exports.getProducts = (req, res, next) => {
+  let path;
+  if(req.route.path === '/') {
+    path = '/shop';
+  } else if(req.route.path === '/products') {
+    path = '/products';
+  }
   const page = +req.query.page || 1;
   Product.count()
   .then(numProducts => {
@@ -22,7 +28,7 @@ exports.getProducts = (req, res, next) => {
       res.render('admin/products', {
           prods: products,
           pageTitle: 'All Products',
-          path: '/shop',
+          path: path,
           currentPage: page,
           hasNextPage: ITEMS_PER_PAGE * page < totalItems,
           hasPreviousPage: page > 1,
@@ -36,10 +42,9 @@ exports.getProducts = (req, res, next) => {
       });
   })
   .catch(err => { 
-    // const error = new Error(err);
-    // error.httpStatusCode = 500;
-    // return next(error);
-    console.log(err);
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
    });
 };
 
@@ -52,36 +57,6 @@ exports.getProduct = (req, res, next) => {
         product: product,
         pageTitle: product.title,
         path: '/products'
-      });
-  })
-  .catch(err => { 
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(error);
-   });
-};
-
-exports.getIndex = (req, res, next) => {
-  const page = +req.query.page || 1;
-  let totalItems;
-
-  Product.count()
-  .then(numProducts => {
-    totalItems = numProducts;
-    return Product.findAll({ 
-      offset: (page-1) * ITEMS_PER_PAGE, 
-      limit: ITEMS_PER_PAGE
-    }) 
-    .then(products => {
-      res.render('admin/products', {
-          prods: products,
-          pageTitle: 'Shop',
-          path: '/',
-          pagination: pagination
-        });
-      })
-      .catch(err => {
-        console.log(err);
       });
   })
   .catch(err => { 
