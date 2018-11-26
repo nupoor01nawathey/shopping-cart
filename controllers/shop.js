@@ -19,10 +19,10 @@ exports.getProducts = (req, res, next) => {
       limit: ITEMS_PER_PAGE
     }) 
     .then(products => {
-      res.render('shop/product-list', {
+      res.render('admin/products', {
           prods: products,
           pageTitle: 'All Products',
-          path: '/products',
+          path: '/shop',
           currentPage: page,
           hasNextPage: ITEMS_PER_PAGE * page < totalItems,
           hasPreviousPage: page > 1,
@@ -73,16 +73,11 @@ exports.getIndex = (req, res, next) => {
       limit: ITEMS_PER_PAGE
     }) 
     .then(products => {
-      res.render('shop/index', {
+      res.render('admin/products', {
           prods: products,
           pageTitle: 'Shop',
           path: '/',
-          currentPage: page,
-          hasNextPage: ITEMS_PER_PAGE * page < totalItems,
-          hasPreviousPage: page > 1,
-          nextPage: page + 1,
-          previousPage: page - 1,
-          lastPage: Math.ceil(totalItems/ITEMS_PER_PAGE)
+          pagination: pagination
         });
       })
       .catch(err => {
