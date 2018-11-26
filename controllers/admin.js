@@ -77,6 +77,12 @@ exports.postAddProduct = (req, res, next) => {
 };
 
 exports.getProducts = (req, res, next) => {
+  let path;
+  if(req.route.path === '/') {
+    path = '/shop';
+  } else if(req.route.path === '/products') {
+    path = '/products';
+  }
   const page = +req.query.page || 1;
   Product.count()
   .then(numProducts => {
@@ -89,7 +95,7 @@ exports.getProducts = (req, res, next) => {
       res.render('admin/products', {
           prods: products,
           pageTitle: 'Admin Products',
-          path: '/admin/products',
+          path: path,
           currentPage: page,
           hasNextPage: ITEMS_PER_PAGE * page < totalItems,
           hasPreviousPage: page > 1,
@@ -205,6 +211,7 @@ exports.postEditProduct = (req, res, next) => {
   })
 }
 
+
 exports.deleteProduct = (req, res, next) => {
   const prodId = req.params.productId;
   Product.findOne({ where: {id: prodId, userId: req.user.id}})
@@ -222,9 +229,9 @@ exports.deleteProduct = (req, res, next) => {
     });
   })
   .catch(err => { 
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    //return next(error);
+    // const error = new Error(err);
+    // error.httpStatusCode = 500;
+    // return next(error);
     res.status(500).json({
       message: 'deleting product failed!'
     });
