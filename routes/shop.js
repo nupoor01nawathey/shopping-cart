@@ -2,13 +2,14 @@ const isAuth = require('../middleware/isAuth');
 
 const express = require('express');
 
-const shopController = require('../controllers/shop');
+const adminController = require('../controllers/admin'),
+      shopController  = require('../controllers/shop');
 
 const router = express.Router();
 
-router.get('/', shopController.getIndex);
+router.get('/', adminController.getProducts);
 
-router.get('/products', shopController.getProducts);
+router.get('/products', adminController.getProducts);
 
 router.get('/products/:productId', shopController.getProduct);
 
