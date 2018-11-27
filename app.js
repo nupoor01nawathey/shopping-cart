@@ -28,6 +28,7 @@ const errorController = require('./controllers/error'),
 
 const isAuth = require('./middleware/isAuth');
 
+// required for mysql session store
 var options = {
 	host: 'localhost',
 	port: 3306,
@@ -37,8 +38,7 @@ var options = {
 };
 const sessionStore    = new MySQLStore(options);
 
-// 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
-
+// ejs template engine
 app.set('view engine', 'ejs');
 app.set('views', 'views');
 
@@ -48,9 +48,11 @@ const authRoutes  = require('./routes/auth');
 
 const csrfToken = csrf(); 
 
+// required for https setup
 const privateKey = fs.readFileSync('server.key'),
       publicCert = fs.readFileSync('server.cert');
 
+// multer config
 const fileStorage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, 'images');
@@ -89,6 +91,7 @@ app.use(session({
     store: sessionStore
 }));
 
+// identify loggedin user using session
 app.use((req, res, next) => {
     if(!req.session.user) {
         return next();
@@ -135,9 +138,11 @@ app.use((error, req, res, next) => {
     });
 });
 
+// use morgan setup for logging
 let accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
 app.use(morgan('combined', { stream: accessLogStream }));
 
+// sequelize relations between product,order and user
 Product.belongsTo(User, {constraints: true, onDelete: 'CASCADE'})
 User.hasMany(Product);
 User.hasOne(Cart);
@@ -148,6 +153,7 @@ Order.belongsTo(User);
 User.hasMany(Order);
 Order.belongsToMany(Product, { through: OrderItem });
 
+// app server config
 const PORT = process.env.PORT || 3000 ;
 sequelize
   //.sync({force: true}) // for modifying existing table not to use in prod
