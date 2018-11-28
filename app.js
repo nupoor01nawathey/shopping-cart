@@ -52,7 +52,7 @@ const csrfToken = csrf();
 const privateKey = fs.readFileSync('server.key'),
       publicCert = fs.readFileSync('server.cert');
 
-// multer config
+// multer config for file store location and filename
 const fileStorage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, 'images');
@@ -61,6 +61,7 @@ const fileStorage = multer.diskStorage({
         cb(null, file.originalname + '-' + new Date().toISOString()) ;
     }
 });
+// multer config for filetype 
 const fileFilter = (req, file, cb) => {
     if( file.mimetype === 'image/png'  || 
         file.mimetype === 'image/jpeg' || 
