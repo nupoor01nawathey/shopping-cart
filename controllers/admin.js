@@ -4,6 +4,7 @@ const Product = require('../models/product');
 const ITEMS_PER_PAGE = 1;
 let   OFFSET = 0;
 
+// render add-product view 
 exports.getAddProduct = (req, res, next) => {
   res.render('admin/edit-product', {
     pageTitle: 'Add Product',
@@ -17,6 +18,8 @@ exports.getAddProduct = (req, res, next) => {
   });
 };
 
+
+// store new product in database
 exports.postAddProduct = (req, res, next) => {
   const title       = req.body.title,
         image       = req.file,
@@ -76,6 +79,8 @@ exports.postAddProduct = (req, res, next) => {
   });
 };
 
+
+// get list of products with pagination 
 exports.getProducts = (req, res, next) => {
   let path;
   if(req.route.path === '/') {
@@ -117,7 +122,8 @@ exports.getProducts = (req, res, next) => {
 };
 
 
-exports.getEditProduct = (req, res, next) => { // TODO FIX EDIT-PRODUCT ROUTE
+// render edit-product view
+exports.getEditProduct = (req, res, next) => {
   const editMode = req.query.edit;
   if(!editMode) {
     return res.redirect('/');
@@ -147,15 +153,14 @@ exports.getEditProduct = (req, res, next) => { // TODO FIX EDIT-PRODUCT ROUTE
   })
 }
 
+// store edited product
 exports.postEditProduct = (req, res, next) => {
   const prodId       = req.body.productId,
   updatedTitle       = req.body.title,
   image              = req.file,
   updatedprice       = req.body.price,
   updateddescription = req.body.description;
-  
   const updatedimageUrl = image.path;
-
   if(!image) {
     return res.status(422).render('admin/edit-products', {
       pageTitle: 'Edit Products',
@@ -211,7 +216,7 @@ exports.postEditProduct = (req, res, next) => {
   })
 }
 
-
+// delete product
 exports.deleteProduct = (req, res, next) => {
   const prodId = req.params.productId;
   Product.findOne({ where: {id: prodId, userId: req.user.id}})
