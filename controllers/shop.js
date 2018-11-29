@@ -6,6 +6,7 @@ const Product = require('../models/product'),
        Cart   = require('../models/cart'),
        Order  = require('../models/order');
 
+// extract product list, render add to cart button in the view
 exports.getProduct = (req, res, next) => {
   const prodId = req.params.productId;
   Product.findByPk(prodId)
@@ -24,6 +25,7 @@ exports.getProduct = (req, res, next) => {
    });
 };
 
+// render cart view
 exports.getCart = (req, res, next) => {
   req.user
     .getCart()
@@ -42,7 +44,7 @@ exports.getCart = (req, res, next) => {
     .catch(err => console.log(err));
 };
 
-
+// check if products exists in cart for given productId, increment if already exists else add new product with qty in the cart
 exports.postCart = (req, res, next) => {
   const prodId = req.body.productId;
   let fetchedCart;
@@ -79,6 +81,7 @@ exports.postCart = (req, res, next) => {
    });
 };
 
+// delete cart in case user changes his mind to not make any purchase
 exports.postCartDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
   req.user
@@ -105,6 +108,7 @@ exports.postCartDeleteProduct = (req, res, next) => {
      });
 }
 
+// get previous orders made by user
 exports.getOrders = (req, res, next) => {
   req.user
     .getOrders({ include: ['products'] })
@@ -121,14 +125,14 @@ exports.getOrders = (req, res, next) => {
 };
 
 exports.postOrder = (req, res, next) => {
-
   // Set your secret key: remember to change this to your live secret key in production
   // See your keys here: https://dashboard.stripe.com/account/apikeys
   var stripe = require("stripe")(process.env.STRIPE_KEY);
-
+      
   // Token is created using Checkout or Elements!
   // Get the payment token ID submitted by the form:
   const token = req.body.stripeToken; // Using Express
+      
   let total = 0;
   let fetchedCart;
   req.user
@@ -139,7 +143,7 @@ exports.postOrder = (req, res, next) => {
     })
     .then(products => {
       products.forEach(p => {
-        total += p.cartItem.quantity * p.price;
+        total += p.cartItem.quantity * p.price; // calculate total price
       });
       return req.user
         .createOrder()
@@ -151,7 +155,7 @@ exports.postOrder = (req, res, next) => {
           }));
         })
         .then((result) => {
-          const charge = stripe.charges.create({
+          const charge = stripe.charges.create({ // make charges using stripe
             amount: total * 100,
             currency: 'usd',
             description: 'Charge for ordered products',
@@ -174,6 +178,7 @@ exports.postOrder = (req, res, next) => {
      });
 }
 
+// render checkout view with order details
 exports.getCheckout = (req, res, next) => {
   req.user
     .getCart()
@@ -198,6 +203,7 @@ exports.getCheckout = (req, res, next) => {
 };
 
 
+// download order invoice in pdf format, TODO send a copy of invoice to the registered email id
 exports.getInvoice = (req, res, next) => {
   const orderId = req.params.orderId;
 
